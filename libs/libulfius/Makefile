@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libulfius
 PKG_VERSION:=2.7.10
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/babelouest/ulfius/tar.gz/v$(PKG_VERSION)?
@@ -42,6 +42,14 @@ $(call Package/libulfius/default)
   PROVIDES:=libulfius
 endef
 
+define Package/libulfius-yder
+$(call Package/libulfius/default)
+  TITLE+= with yder support
+  VARIANT:=yder
+  DEPENDS:=+libmicrohttpd +libcurl +liborcania +libyder
+  PROVIDES:=libulfius
+endef
+
 CMAKE_OPTIONS += \
 	-D_GNU_SOURCE=ON \
 	-DDOWNLOAD_DEPENDENCIES=OFF \
@@ -50,8 +58,6 @@ CMAKE_OPTIONS += \
 	-DWITH_CURL=ON \
 	-DWITH_JANSSON=OFF \
 	-DWITH_STRSTR=ON \
-	-DWITH_YDER=OFF \
-	-DSEARCH_YDER=OFF \
 	-DCMAKE_BUILD_TYPE=Release
 
 ifeq ($(BUILD_VARIANT),gnutls)
@@ -60,5 +66,29 @@ else
 	CMAKE_OPTIONS += -DWITH_GNUTLS=OFF
 endif
 
+ifeq ($(BUILD_VARIANT),yder)
+	CMAKE_OPTIONS += -DWITH_YDER=ON -DSEARCH_YDER=ON
+else
+	CMAKE_OPTIONS += -DWITH_YDER=OFF -DSEARCH_YDER=OFF
+endif
+
+define Package/libulfius/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libulfius.so* $(1)/usr/lib/
+endef
+
+define Package/libulfius-nossl/install
+  $(call Package/libulfius/install,$(1))
+endef
+
+define Package/libulfius-gnutls/install
+  $(call Package/libulfius/install,$(1))
+endef
+
+define Package/libulfius-yder/install
+  $(call Package/libulfius/install,$(1))
+endef
+
 $(eval $(call BuildPackage,libulfius-gnutls))
+$(eval $(call BuildPackage,libulfius-yder))
 $(eval $(call BuildPackage,libulfius-nossl))
